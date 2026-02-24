@@ -87,6 +87,7 @@ type WinMemory = {
     set: (key: string, value: unknown) => void;
     update: (key: string, partial: unknown) => void;
     delete: (key: string) => void;
+    clearAll: () => void;
   };
   _resetMemory: () => void;
 };
@@ -167,5 +168,17 @@ describe("memory in real browser (puppeteer)", () => {
       return { snake: mem.get("snake"), tetris: mem.get("tetris") };
     });
     expect(result).toEqual({ snake: { highScore: 1 }, tetris: { highScore: 2 } });
+  }));
+
+  test("clearAll wipes all stored data so every get returns {}", ifBrowser(async (p) => {
+    const result = await p.evaluate(() => {
+      const { getMemory } = (window as unknown as { __memory: WinMemory }).__memory;
+      const mem = getMemory();
+      mem.set("snake", { highScore: 10 });
+      mem.set("tetris", { highScore: 20 });
+      mem.clearAll();
+      return { snake: mem.get("snake"), tetris: mem.get("tetris") };
+    });
+    expect(result).toEqual({ snake: {}, tetris: {} });
   }));
 });

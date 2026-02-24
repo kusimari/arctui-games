@@ -10,6 +10,7 @@ function makeStorageDouble(): StorageLike & { _data: Record<string, string> } {
     getItem: (key) => _data[key] ?? null,
     setItem: (key, value) => { _data[key] = value; },
     removeItem: (key) => { delete _data[key]; },
+    clear: () => { for (const k of Object.keys(_data)) delete _data[k]; },
   };
 }
 
@@ -87,6 +88,22 @@ describe("createMemory", () => {
     mem.set("tetris", { highScore: 999 });
     expect(mem.get("snake")).toEqual({ highScore: 100 });
     expect(mem.get("tetris")).toEqual({ highScore: 999 });
+  });
+
+  describe("clearAll", () => {
+    test("wipes every stored key so all gets return {}", () => {
+      const mem = createMemory(makeStorageDouble());
+      mem.set("snake", { highScore: 10 });
+      mem.set("tetris", { highScore: 20 });
+      mem.clearAll();
+      expect(mem.get("snake")).toEqual({});
+      expect(mem.get("tetris")).toEqual({});
+    });
+
+    test("is a no-op when storage is already empty", () => {
+      const mem = createMemory(makeStorageDouble());
+      expect(() => mem.clearAll()).not.toThrow();
+    });
   });
 });
 

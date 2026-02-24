@@ -7,6 +7,7 @@ export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
+  clear(): void;
 }
 
 /** A keyed memory interface. Each key names one game's storage object. */
@@ -19,6 +20,8 @@ export interface BrowserMemory {
   update<T extends object>(key: string, partial: Partial<T>): void;
   /** Removes the stored object for key. */
   delete(key: string): void;
+  /** Wipes all stored data — clean slate for the user. */
+  clearAll(): void;
 }
 
 export function createMemory(storage: StorageLike): BrowserMemory {
@@ -44,6 +47,10 @@ export function createMemory(storage: StorageLike): BrowserMemory {
 
     delete(key: string): void {
       storage.removeItem(key);
+    },
+
+    clearAll(): void {
+      storage.clear();
     },
   };
 }
