@@ -4,7 +4,7 @@
   "description": "Arcade games using web as TUI",
   "type": "module",
   "scripts": {
-    "build": "bun build src/index.html --outdir build",
+    "build": "bun ./build.ts",
     "dev": "bun build src/index.html --outdir build --watch",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
