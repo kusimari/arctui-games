@@ -4,8 +4,13 @@
   "description": "Arcade games using web as TUI",
   "type": "module",
   "scripts": {
-    "start": "npx serve public",
-    "lint": "npx eslint src"
+    "build": "bun build src/index.html --outdir build",
+    "dev": "bun build src/index.html --outdir build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
   },
-  "license": "MIT"
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/bun": "latest"
+  }
 }

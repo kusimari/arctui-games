@@ -6,41 +6,53 @@ A collection of classic arcade games rendered in the browser using a TUI (text u
 
 ## Stack
 
-- **Runtime**: Browser (vanilla JS, no framework)
-- **Renderer**: DOM-based TUI cells (character grid, CSS terminal styling)
-- **Entry point**: `public/index.html` → `src/index.js`
-- **Build**: none for MVP; plain ES modules via `<script type="module">`
-- **Package management**: npm (dev tooling only)
+- **Language**: TypeScript (transpiled by Bun at build time)
+- **Runtime**: Browser (no framework)
+- **Bundler**: Bun — `bun build src/index.html --outdir build`
+- **Tests**: `bun test` (files in `test/`, named `*.test.ts`)
+- **Deploy**: GitHub Actions → GitHub Pages on push to `main`
 
 ## Directory Layout
 
 ```
 arctui-games/
+├── .github/
+│   └── workflows/
+│       └── publish.yml       ← builds + deploys to GitHub Pages
 ├── .kdevkit/
-│   ├── project.md          ← this file
-│   └── feature/            ← one .md per feature
-├── public/
-│   ├── index.html          ← shell page
-│   └── style.css           ← terminal theme
+│   ├── project.md            ← this file
+│   └── feature/              ← one .md per feature
 ├── src/
-│   ├── index.js            ← bootstraps renderer + game loop
-│   ├── renderer.js         ← draws a character-grid to the DOM
-│   ├── input.js            ← keyboard event abstraction
-│   └── games/
-│       └── index.js        ← game registry / router
+│   ├── index.html            ← bundler entry point (references .ts + .css)
+│   ├── style.css             ← global styles
+│   └── index.ts              ← TypeScript entry point
+├── test/                     ← test files (*.test.ts), mirrors src/ structure
+├── build/                    ← GITIGNORED — output of `bun run build`
+├── .gitignore
 ├── package.json
+├── tsconfig.json
 └── README.md
 ```
 
+## Build
+
+```sh
+bun run build      # bundle src/index.html → build/
+bun run dev        # same with --watch
+bun run typecheck  # tsc --noEmit
+bun test           # run tests
+```
+
+The `build/` directory is **never committed**. The GitHub Action runs `bun run build` on every push to `main` and publishes the output to GitHub Pages.
+
 ## Conventions
 
-- ES modules throughout; no CommonJS
-- Each game lives in `src/games/<name>/index.js` and exports a `Game` class
-- `Game` interface: `{ init(renderer), update(dt), render(renderer), destroy() }`
-- Renderer exposes: `put(x, y, char, fg, bg)`, `clear()`, `flush()`
-- Colours are named CSS custom properties (`--color-fg`, `--color-bg`, `--color-accent`)
-- No external runtime dependencies for MVP
+- TypeScript strict mode throughout
+- Source files in `src/`, test files in `test/`
+- Each game will live in `src/games/<name>/index.ts` and export a `Game` class
+- No external runtime dependencies (dev deps only)
+- CSS custom properties for theming (`--color-fg`, `--color-bg`, `--color-accent`)
 
 ## Status
 
-Initial scaffold in progress (feature: initial-setup).
+Initial scaffold complete (feature: initial-setup). Page renders with header, blank body, and GitHub footer.
