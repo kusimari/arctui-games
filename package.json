@@ -1,0 +1,11 @@
+{
+  "name": "arctui-games",
+  "version": "0.1.0",
+  "description": "Arcade games using web as TUI",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve public",
+    "lint": "npx eslint src"
+  },
+  "license": "MIT"
+}
