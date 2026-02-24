@@ -1,0 +1,16 @@
+{
+  "name": "arctui-games",
+  "version": "0.1.0",
+  "description": "Arcade games using web as TUI",
+  "type": "module",
+  "scripts": {
+    "build": "bun ./build.ts",
+    "dev": "bun build src/index.html --outdir build --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/bun": "latest"
+  }
+}
