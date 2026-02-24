@@ -1,18 +1,11 @@
-// Browser memory — typed localStorage wrapper.
+// Browser memory — typed key-value store backed by store2 (localStorage).
 // `getMemory()` is the singleton accessor for app code.
-// `createMemory(storage)` is the factory for use with injected test doubles.
 
-/** Minimal storage interface — compatible with `localStorage` and test doubles. */
-export interface StorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
-  clear(): void;
-}
+import store from "store2";
 
 /** A keyed memory interface. Each key names one game's storage object. */
 export interface BrowserMemory {
-  /** Returns the stored object for key, or {} if no data exists yet. */
+  /** Returns the stored object for key, or {} if none exists. */
   get<T extends object = Record<string, never>>(key: string): T;
   /** Stores value under key, replacing any existing value. */
   set<T extends object>(key: string, value: T): void;
@@ -24,48 +17,29 @@ export interface BrowserMemory {
   clearAll(): void;
 }
 
-export function createMemory(storage: StorageLike): BrowserMemory {
-  return {
-    get<T extends object = Record<string, never>>(key: string): T {
-      try {
-        const raw = storage.getItem(key);
-        if (!raw) return {} as T;
-        return JSON.parse(raw) as T;
-      } catch {
-        return {} as T;
-      }
-    },
-
-    set<T extends object>(key: string, value: T): void {
-      storage.setItem(key, JSON.stringify(value));
-    },
-
-    update<T extends object>(key: string, partial: Partial<T>): void {
-      const existing = this.get<T>(key);
-      this.set(key, { ...existing, ...partial });
-    },
-
-    delete(key: string): void {
-      storage.removeItem(key);
-    },
-
-    clearAll(): void {
-      storage.clear();
-    },
-  };
-}
-
-// Singleton backed by real browser localStorage.
 let _instance: BrowserMemory | undefined;
 
-/**
- * Returns (or creates) the singleton BrowserMemory backed by localStorage.
- * Pass `storage` only on the very first call — subsequent calls return the
- * cached instance regardless of the argument. Tests use this to inject a mock.
- */
-export function getMemory(storage?: StorageLike): BrowserMemory {
+/** Returns (or creates) the singleton BrowserMemory. */
+export function getMemory(): BrowserMemory {
   if (!_instance) {
-    _instance = createMemory(storage ?? localStorage);
+    _instance = {
+      get<T extends object = Record<string, never>>(key: string): T {
+        return (store.get(key) as T | null) ?? ({} as T);
+      },
+      set<T extends object>(key: string, value: T): void {
+        store.set(key, value);
+      },
+      update<T extends object>(key: string, partial: Partial<T>): void {
+        const existing = this.get<T>(key);
+        this.set(key, { ...existing, ...partial });
+      },
+      delete(key: string): void {
+        store.remove(key);
+      },
+      clearAll(): void {
+        store.clearAll();
+      },
+    };
   }
   return _instance;
 }

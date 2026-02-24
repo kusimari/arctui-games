@@ -29,17 +29,17 @@ No storage layer exists yet; each page load starts completely fresh.
 
 ### Decisions
 
-- Wrap `localStorage` in a typed module rather than calling it directly from games
-- `StorageLike` interface makes the storage injectable — tests supply a mock, no real `localStorage` needed
-- `puppeteer` is added as a devDependency for real-browser integration tests; unit tests use a test double
-- Puppeteer tests skip gracefully when no browser executable is available
+- Use `store2` as the storage backend — it handles cross-browser compat, JSON serialisation, and falls back to in-memory storage in non-browser environments (e.g. Bun test runner)
+- `memory.ts` is a thin typed wrapper; we only write and test what store2 does not give us: the `{}` default, `update` merge logic, and the singleton
+- `puppeteer` covers our additions in a real browser; unit tests cover them in Bun via store2's in-memory fallback
+- If we adopt React later, the `BrowserMemory` interface stays the same; store2 is swapped for a reactive solution (e.g. zustand/persist) inside `memory.ts` only
 
 ### Success metrics
 
-- `src/memory.ts` exports `BrowserMemory`, `StorageLike`, `createMemory`, `getMemory`, `_resetMemory`
-- `test/memory.test.ts` covers full behaviour with a `makeStorageDouble()` test double
-- `test/memory.puppeteer.test.ts` runs the same scenarios in real Chromium (skips if unavailable)
-- `bun test` — all 26 tests pass
+- `src/memory.ts` exports `BrowserMemory`, `getMemory`, `_resetMemory` (backed by store2)
+- `test/memory.test.ts` tests only our additions (5 tests)
+- `test/memory.puppeteer.test.ts` tests our additions in real Chromium (skips if unavailable)
+- `bun test` — all 12 tests pass
 - `bun run typecheck` — clean (strict mode, no errors)
 
 ## Implementation Plan
@@ -59,3 +59,6 @@ No storage layer exists yet; each page load starts completely fresh.
 - 2026-02-24 (init): Feature scaffolded with initial `getHighScore`/`setHighScore` API.
 - 2026-02-24 (revision): Redesigned to generic `get`/`set`/`update`/`delete` interface with singleton
   `getMemory()`, injectable storage double, and puppeteer integration tests.
+- 2026-02-24 (store2): Replaced hand-rolled localStorage wrapper with store2. Removed StorageLike,
+  createMemory, and makeStorageDouble. Tests now cover only our additions (singleton, {} default,
+  update merge). store2's in-memory fallback means unit tests run in Bun without a test double.

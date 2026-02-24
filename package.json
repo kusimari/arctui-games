@@ -13,5 +13,8 @@
     "@types/bun": "latest",
     "puppeteer": "^24.37.5",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "store2": "^2.14.4"
   }
 }
