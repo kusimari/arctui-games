@@ -1,63 +1,69 @@
-// Browser memory — typed localStorage wrapper for game state persistence.
-// Use the `memory` singleton in game code. Use `createMemory(mockStorage)` in tests.
+// Browser memory — typed localStorage wrapper.
+// `getMemory()` is the singleton accessor for app code.
+// `createMemory(storage)` is the factory for use with injected test doubles.
 
-export interface GameRecord {
-  highScore: number;
-}
-
-export interface MemoryStore {
-  [game: string]: GameRecord;
-}
-
-/** Minimal storage interface — compatible with `localStorage` and test mocks. */
+/** Minimal storage interface — compatible with `localStorage` and test doubles. */
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
 }
 
-const STORAGE_KEY = "arctui-games";
+/** A keyed memory interface. Each key names one game's storage object. */
+export interface BrowserMemory {
+  /** Returns the stored object for key, or {} if no data exists yet. */
+  get<T extends object = Record<string, never>>(key: string): T;
+  /** Stores value under key, replacing any existing value. */
+  set<T extends object>(key: string, value: T): void;
+  /** Merges partial into the existing object (creates {} base if none exists). */
+  update<T extends object>(key: string, partial: Partial<T>): void;
+  /** Removes the stored object for key. */
+  delete(key: string): void;
+}
 
-export function createMemory(storage?: StorageLike) {
-  // Access localStorage lazily (at call time) so the module can be imported
-  // in non-browser environments (e.g. Bun test runner) without errors.
-  function getStorage(): StorageLike {
-    return storage ?? localStorage;
-  }
-
-  function load(): MemoryStore {
-    try {
-      const raw = getStorage().getItem(STORAGE_KEY);
-      if (!raw) return {};
-      return JSON.parse(raw) as MemoryStore;
-    } catch {
-      return {};
-    }
-  }
-
-  function save(store: MemoryStore): void {
-    getStorage().setItem(STORAGE_KEY, JSON.stringify(store));
-  }
-
+export function createMemory(storage: StorageLike): BrowserMemory {
   return {
-    getHighScore(game: string): number {
-      return load()[game]?.highScore ?? 0;
-    },
-
-    setHighScore(game: string, score: number): void {
-      const store = load();
-      const best = store[game]?.highScore ?? 0;
-      if (score > best) {
-        store[game] = { ...store[game], highScore: score };
-        save(store);
+    get<T extends object = Record<string, never>>(key: string): T {
+      try {
+        const raw = storage.getItem(key);
+        if (!raw) return {} as T;
+        return JSON.parse(raw) as T;
+      } catch {
+        return {} as T;
       }
     },
 
-    clearAll(): void {
-      getStorage().removeItem(STORAGE_KEY);
+    set<T extends object>(key: string, value: T): void {
+      storage.setItem(key, JSON.stringify(value));
+    },
+
+    update<T extends object>(key: string, partial: Partial<T>): void {
+      const existing = this.get<T>(key);
+      this.set(key, { ...existing, ...partial });
+    },
+
+    delete(key: string): void {
+      storage.removeItem(key);
     },
   };
 }
 
-/** Default singleton — uses real browser localStorage. */
-export const memory = createMemory();
+// Singleton backed by real browser localStorage.
+let _instance: BrowserMemory | undefined;
+
+/**
+ * Returns (or creates) the singleton BrowserMemory backed by localStorage.
+ * Pass `storage` only on the very first call — subsequent calls return the
+ * cached instance regardless of the argument. Tests use this to inject a mock.
+ */
+export function getMemory(storage?: StorageLike): BrowserMemory {
+  if (!_instance) {
+    _instance = createMemory(storage ?? localStorage);
+  }
+  return _instance;
+}
+
+/** Resets the singleton. Call this in `beforeEach` in tests. */
+export function _resetMemory(): void {
+  _instance = undefined;
+}
