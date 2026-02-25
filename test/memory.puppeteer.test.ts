@@ -75,11 +75,11 @@ describe("memory additions in real browser (puppeteer)", () => {
     });
   });
 
-  test("get returns {} for unknown key", ifBrowser(async (p) => {
+  test("get returns ok {} for unknown key", ifBrowser(async (p) => {
     const result = await p.evaluate(() =>
       (window as unknown as Win).__memory.getMemory().get("snake"),
     );
-    expect(result).toEqual({});
+    expect(result).toEqual({ ok: true, value: {} });
   }));
 
   test("getMemory is a singleton", ifBrowser(async (p) => {
@@ -97,6 +97,6 @@ describe("memory additions in real browser (puppeteer)", () => {
       mem.update("snake", { highScore: 50 });
       return mem.get("snake");
     });
-    expect(result).toEqual({ highScore: 50, lives: 3 });
+    expect(result).toEqual({ ok: true, value: { highScore: 50, lives: 3 } });
   }));
 });
