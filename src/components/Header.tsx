@@ -3,11 +3,9 @@ import { getMemory } from "../memory";
 
 type UsernameRecord = { name?: string };
 
-export function Header() {
-  const r = getMemory().get<UsernameRecord>("username");
-  const [name, setName] = useState<string | null>(
-    r.isOk() && r.value.name ? r.value.name : null,
-  );
+export function Header({ label }: { label: string }) {
+  const stored = getMemory().get<UsernameRecord>("username");
+  const [name, setName] = useState<string | null>(stored.name ?? null);
   const [input, setInput] = useState("");
 
   function handleSet() {
@@ -26,7 +24,7 @@ export function Header() {
 
   return (
     <header>
-      <span>arctui</span>
+      <span>{label}</span>
       <div className="header-user">
         {name ? (
           <>

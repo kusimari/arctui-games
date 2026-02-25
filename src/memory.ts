@@ -1,17 +1,14 @@
 // Browser memory — typed key-value store backed by store2 (localStorage).
 
 import store from "store2";
-import { ok, err, type Result } from "neverthrow";
-
-export type { Result };
 
 /** A keyed memory interface. Each key names one game's storage object. */
 export interface BrowserMemory {
-  get<T extends object>(key: string): Result<T, Error>;
-  set<T extends object>(key: string, value: T): Result<void, Error>;
-  update<T extends object>(key: string, partial: Partial<T>): Result<void, Error>;
-  delete(key: string): Result<void, Error>;
-  clearAll(): Result<void, Error>;
+  get<T extends object>(key: string): T;
+  set<T extends object>(key: string, value: T): void;
+  update<T extends object>(key: string, partial: Partial<T>): void;
+  delete(key: string): void;
+  clearAll(): void;
 }
 
 let _instance: BrowserMemory | undefined;
@@ -20,41 +17,20 @@ let _instance: BrowserMemory | undefined;
 export function getMemory(): BrowserMemory {
   if (!_instance) {
     const impl: BrowserMemory = {
-      get<T extends object>(key: string): Result<T, Error> {
-        try {
-          return ok((store.get(key) as T | null) ?? ({} as T));
-        } catch (e) {
-          return err(e instanceof Error ? e : new Error(String(e)));
-        }
+      get<T extends object>(key: string): T {
+        return (store.get(key) as T | null) ?? ({} as T);
       },
-      set<T extends object>(key: string, value: T): Result<void, Error> {
-        try {
-          store.set(key, value);
-          return ok(undefined);
-        } catch (e) {
-          return err(e instanceof Error ? e : new Error(String(e)));
-        }
+      set<T extends object>(key: string, value: T): void {
+        store.set(key, value);
       },
-      update<T extends object>(key: string, partial: Partial<T>): Result<void, Error> {
-        return impl.get<T>(key).andThen(existing =>
-          impl.set(key, { ...existing, ...partial } as T)
-        );
+      update<T extends object>(key: string, partial: Partial<T>): void {
+        impl.set(key, { ...impl.get<T>(key), ...partial } as T);
       },
-      delete(key: string): Result<void, Error> {
-        try {
-          store.remove(key);
-          return ok(undefined);
-        } catch (e) {
-          return err(e instanceof Error ? e : new Error(String(e)));
-        }
+      delete(key: string): void {
+        store.remove(key);
       },
-      clearAll(): Result<void, Error> {
-        try {
-          store.clearAll();
-          return ok(undefined);
-        } catch (e) {
-          return err(e instanceof Error ? e : new Error(String(e)));
-        }
+      clearAll(): void {
+        store.clearAll();
       },
     };
     _instance = impl;
