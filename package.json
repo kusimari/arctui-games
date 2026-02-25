@@ -7,7 +7,8 @@
     "build": "bun ./build.ts",
     "dev": "bun build src/index.html --outdir build --watch",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "validate-build": "bun scripts/validate-build.ts"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.7.0",
@@ -15,6 +16,7 @@
     "@types/bun": "latest",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "puppeteer": "^24.37.5",
     "typescript": "^5.0.0"
   },
   "dependencies": {
