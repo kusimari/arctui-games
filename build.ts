@@ -36,8 +36,12 @@ html = html.replace(/<script\b([^>]*)><\/script>/gi, (_, attrs: string) => {
   const filePath = join(outDir, m[1].replace(/^\.\//, ""));
   const js = readFileSync(filePath, "utf8");
   rmSync(filePath);
+  // Escape </script> inside the JS content so the HTML parser doesn't
+  // terminate the <script> block early when it encounters that string
+  // inside a JS literal (e.g. React's innerHTML = "<script>" code paths).
+  const safeJs = js.replace(/<\/script/gi, "<\\/script");
   const newAttrs = attrs.replace(/\s*src=["'][^"']*["']/, "").trim();
-  return `<script${newAttrs ? ` ${newAttrs}` : ""}>${js}</script>`;
+  return `<script${newAttrs ? ` ${newAttrs}` : ""}>${safeJs}</script>`;
 });
 
 // 5. Write the final single-file HTML back
