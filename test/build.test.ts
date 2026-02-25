@@ -26,8 +26,12 @@ test("build/ contains only index.html (CSS and JS are inlined, not separate file
 
 test("build/index.html has CSS inlined as <style>", () => {
   const html = readFileSync(join(buildDir, "index.html"), "utf8");
-  expect(html).toMatch(/<style[^>]*>/);
-  expect(html).not.toMatch(/<link[^>]+stylesheet/);
+  // Parse as DOM to check actual elements, not raw text — avoids false positives
+  // from JS bundle content (e.g. React 19's internal stylesheet preloading API
+  // strings like "link[rel=stylesheet]" that appear inside the inlined script).
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  expect(doc.querySelector("style")).not.toBeNull();
+  expect(doc.querySelector('link[rel="stylesheet"]')).toBeNull();
 });
 
 test("build/index.html has JS inlined (no external script src)", () => {

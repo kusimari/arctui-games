@@ -52,6 +52,7 @@ The `build/` directory is **never committed**. The GitHub Action runs `bun run b
 - Each game will live in `src/games/<name>/index.ts` and export a `Game` class
 - No external runtime dependencies (dev deps only)
 - CSS custom properties for theming (`--color-fg`, `--color-bg`, `--color-accent`)
+- **No try-catch**: do not use try-catch blocks. Functions return typed values directly. APIs and libraries that can throw should be wrapped at the boundary in a way that never surfaces exceptions — prefer libraries (like store2) whose sync API does not throw under normal operation.
 
 ## Status
 
