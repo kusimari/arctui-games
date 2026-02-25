@@ -4,8 +4,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "jsx": "react-jsx",
     "lib": ["ESNext", "DOM"],
-    "noEmit": true
+    "noEmit": true,
+    "skipLibCheck": true
   },
   "include": ["src", "test"]
 }

@@ -76,9 +76,10 @@ describe("memory additions in real browser (puppeteer)", () => {
   });
 
   test("get returns ok {} for unknown key", ifBrowser(async (p) => {
-    const result = await p.evaluate(() =>
-      (window as unknown as Win).__memory.getMemory().get("snake"),
-    );
+    const result = await p.evaluate(() => {
+      const r = (window as unknown as Win).__memory.getMemory().get("snake");
+      return { ok: r.isOk(), value: r.isOk() ? r.value : null };
+    });
     expect(result).toEqual({ ok: true, value: {} });
   }));
 
@@ -95,7 +96,8 @@ describe("memory additions in real browser (puppeteer)", () => {
       const mem = (window as unknown as Win).__memory.getMemory();
       mem.set("snake", { highScore: 10, lives: 3 });
       mem.update("snake", { highScore: 50 });
-      return mem.get("snake");
+      const r = mem.get("snake");
+      return { ok: r.isOk(), value: r.isOk() ? r.value : null };
     });
     expect(result).toEqual({ ok: true, value: { highScore: 50, lives: 3 } });
   }));

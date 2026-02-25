@@ -1,23 +1,17 @@
 // Browser memory — typed key-value store backed by store2 (localStorage).
 
 import store from "store2";
+import { ok, err, type Result } from "neverthrow";
 
-export type Result<T> = { ok: true; value: T } | { ok: false; error: Error };
-
-// Module-private helpers for constructing Result values.
-function ok<T>(value: T): Result<T> { return { ok: true, value }; }
-function okVoid(): Result<void>      { return { ok: true, value: undefined }; }
-function fail(e: unknown): { ok: false; error: Error } {
-  return { ok: false, error: e instanceof Error ? e : new Error(String(e)) };
-}
+export type { Result };
 
 /** A keyed memory interface. Each key names one game's storage object. */
 export interface BrowserMemory {
-  get<T extends object>(key: string): Result<T>;
-  set<T extends object>(key: string, value: T): Result<void>;
-  update<T extends object>(key: string, partial: Partial<T>): Result<void>;
-  delete(key: string): Result<void>;
-  clearAll(): Result<void>;
+  get<T extends object>(key: string): Result<T, Error>;
+  set<T extends object>(key: string, value: T): Result<void, Error>;
+  update<T extends object>(key: string, partial: Partial<T>): Result<void, Error>;
+  delete(key: string): Result<void, Error>;
+  clearAll(): Result<void, Error>;
 }
 
 let _instance: BrowserMemory | undefined;
@@ -25,42 +19,41 @@ let _instance: BrowserMemory | undefined;
 /** Returns (or creates) the singleton BrowserMemory. */
 export function getMemory(): BrowserMemory {
   if (!_instance) {
-    // Use `impl` in method bodies instead of `this` to avoid binding issues.
     const impl: BrowserMemory = {
-      get<T extends object>(key: string): Result<T> {
+      get<T extends object>(key: string): Result<T, Error> {
         try {
           return ok((store.get(key) as T | null) ?? ({} as T));
         } catch (e) {
-          return fail(e);
+          return err(e instanceof Error ? e : new Error(String(e)));
         }
       },
-      set<T extends object>(key: string, value: T): Result<void> {
+      set<T extends object>(key: string, value: T): Result<void, Error> {
         try {
           store.set(key, value);
-          return okVoid();
+          return ok(undefined);
         } catch (e) {
-          return fail(e);
+          return err(e instanceof Error ? e : new Error(String(e)));
         }
       },
-      update<T extends object>(key: string, partial: Partial<T>): Result<void> {
-        const r = impl.get<T>(key);
-        if (!r.ok) return r;
-        return impl.set(key, { ...r.value, ...partial });
+      update<T extends object>(key: string, partial: Partial<T>): Result<void, Error> {
+        return impl.get<T>(key).andThen(existing =>
+          impl.set(key, { ...existing, ...partial } as T)
+        );
       },
-      delete(key: string): Result<void> {
+      delete(key: string): Result<void, Error> {
         try {
           store.remove(key);
-          return okVoid();
+          return ok(undefined);
         } catch (e) {
-          return fail(e);
+          return err(e instanceof Error ? e : new Error(String(e)));
         }
       },
-      clearAll(): Result<void> {
+      clearAll(): Result<void, Error> {
         try {
           store.clearAll();
-          return okVoid();
+          return ok(undefined);
         } catch (e) {
-          return fail(e);
+          return err(e instanceof Error ? e : new Error(String(e)));
         }
       },
     };

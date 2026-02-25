@@ -1,11 +1,6 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import store from "store2";
-import { getMemory, _resetMemory, type Result } from "../src/memory";
-
-function unwrap<T>(r: Result<T>): T {
-  if (!r.ok) throw r.error;
-  return r.value;
-}
+import { getMemory, _resetMemory } from "../src/memory";
 
 beforeEach(() => {
   store.clearAll();
@@ -27,20 +22,20 @@ describe("singleton", () => {
 
 describe("get", () => {
   test("returns ok {} for a key with no stored data", () => {
-    expect(unwrap(getMemory().get("snake"))).toEqual({});
+    expect(getMemory().get("snake")._unsafeUnwrap()).toEqual({});
   });
 });
 
 describe("update", () => {
   test("merges partial into an existing stored object", () => {
     const mem = getMemory();
-    unwrap(mem.set("snake", { highScore: 10, lives: 3 }));
-    unwrap(mem.update("snake", { highScore: 50 }));
-    expect(unwrap(mem.get("snake"))).toEqual({ highScore: 50, lives: 3 });
+    mem.set("snake", { highScore: 10, lives: 3 });
+    mem.update("snake", { highScore: 50 });
+    expect(mem.get("snake")._unsafeUnwrap()).toEqual({ highScore: 50, lives: 3 });
   });
 
   test("creates from partial when no object exists for the key", () => {
-    unwrap(getMemory().update("snake", { highScore: 50 }));
-    expect(unwrap(getMemory().get("snake"))).toEqual({ highScore: 50 });
+    getMemory().update("snake", { highScore: 50 });
+    expect(getMemory().get("snake")._unsafeUnwrap()).toEqual({ highScore: 50 });
   });
 });
